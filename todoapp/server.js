@@ -86,12 +86,27 @@ MongoClient.connect('mongodb+srv://admin:qwer1234@cluster0.hkmtq.mongodb.net/myF
 app.post('/add', function (req, res) {
     console.log(req.body)
     res.send(req.body);
-    // 콜렉션(파일) 'post'에 연결한다.
-    // insertOne('저장할 데이터', function(에러, 결과){})
-    // 이 때 _id 속성은 필수 내용인데, 지정하지 않을 시 DB에서 자동으로 부여해준다.
-    db.collection('post').insertOne({ 날짜: req.body.date, 제목: req.body.title }, function (err, result) {
-        console.log(req.body + "데이터 전송 완료.");
+
+    // 총 게시물 수 데이터 DB에서 가져오기
+    const countData = db.collection('counter').findOne({name : '게시물갯수'} , function(err, result){
+        var totlaPostCount = result.totalPost;
+
+        // 콜렉션(파일) 'post'에 연결한다.
+        // insertOne('저장할 데이터', function(에러, 결과){})
+        // 이 때 _id 속성은 필수 내용인데, 지정하지 않을 시 DB에서 자동으로 부여해준다.
+        // 현재 id는 auto increment를 구현해 번호를 부여해줄 것이다. (몽고디비에는 이 기능 지원하지 않기 때문) 
+        db.collection('post').insertOne({ _id: totlaPostCount + 1, 날짜: req.body.date, 제목: req.body.title }, function (err, result) {
+            console.log(req.body);
+            // counter라는 콜렉션에 있는 totalPost라는 항목도 1 증가시켜줘야 한다. (DB 수정, update)
+            // updateOne({어떤 데이터를 수정할 지}, {$오퍼레이터 {수정값}}, function(){});
+            // operator : $set(변경), $inc(증가), $min(기존값보다 적으면 변경), $rename(key값 이름 변경)
+            db.collection('counter').updateOne({name : '게시물갯수'}, { $inc : {totalPost : 1}}, function(err, result){
+                if(err){return console.log(err)} // 콜백 함수 자체를 생략할 수도 있다. 
+            }); // many 항목도 있당
+        });
+
     });
+
 });
 
 
@@ -110,7 +125,5 @@ app.get('/list', function(req, res){
         // 탐색한 데이터를 ejs에 집어넣고 파일 렌더링
         res.render('list.ejs', {posts : result});
     });
-
-    
 });
 
