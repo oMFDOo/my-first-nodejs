@@ -127,3 +127,17 @@ app.get('/list', function(req, res){
     });
 });
 
+
+
+/************************/
+/* HTML에 DB데이터 삭제 */
+/************************/
+
+app.delete('/delete', function(req, res){
+    req.body._id = parseInt(req.body._id);  
+    console.log(req.body);
+    // req.body에 담겨온 게시물 번호를 이용해서 삭제
+    db.collection('post').deleteOne(req.body, function(err, result){
+        console.log('삭제 완료');
+    });
+});
